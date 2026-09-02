@@ -16,7 +16,8 @@ denominators yield NULL, never errors. Metric semantics live in
 | `executive_trends.parquet` | year (statewide) | the six executive KPIs plus derived rates |
 | `payer_exposure.parquet` | year x facility x county x payer class | discharges, estimated cost (exposure, not margin) |
 | `service_line_summary.parquet` | year x service line (APR-MDC) x APR-DRG | volume, estimated cost, ALOS, high-severity counts |
-| `facility_benchmarks.parquet` | year x facility (redacted excluded) | volume, cost per discharge, ALOS, severity share; cost index lands in Milestone 3 |
+| `facility_benchmarks.parquet` | year x facility (redacted excluded) | volume, cost per discharge, ALOS, severity share |
+| `facility_drg_benchmarks.parquet` | year x facility x APR-DRG (redacted excluded) | volume, estimated cost, bed days, severity counts feeding the case-mix adjusted cost index |
 | `process_control_series.parquet` | metric x series x year | numerator, denominator, value (statewide 5 metrics + per-MDC ALOS and cost) |
 | `data_quality_summary.parquet` | year | completeness, invalid-value counts, redaction share, schema family |
 
@@ -64,6 +65,6 @@ flowchart LR
 | 0 | Foundation: structure, tooling, CI | Complete |
 | 1 | Source registry, download, ingestion, canonical mapping | Complete |
 | 2 | Staging model, marts, metrics, quality output | Complete |
-| 3 | Benchmarks and XmR control charts | Not started |
+| 3 | Benchmarks and XmR control charts | Complete |
 | 4 | Streamlit application | Not started |
 | 5 | Documentation, deployment, final audit | Not started |

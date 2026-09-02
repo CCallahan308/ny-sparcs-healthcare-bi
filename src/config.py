@@ -41,6 +41,7 @@ MART_EXPORTS: dict[str, str] = {
     "mart_payer_exposure": "payer_exposure.parquet",
     "mart_service_line_summary": "service_line_summary.parquet",
     "mart_facility_benchmarks": "facility_benchmarks.parquet",
+    "mart_facility_drg_benchmarks": "facility_drg_benchmarks.parquet",
     "mart_process_control_series": "process_control_series.parquet",
     "mart_data_quality_summary": "data_quality_summary.parquet",
 }
@@ -48,6 +49,16 @@ MART_EXPORTS: dict[str, str] = {
 # 2020 is treated as an assignable-cause period: excluded from baseline
 # control-limit calculation by default, retained in displayed series.
 EXCLUDED_BASELINE_YEARS = frozenset({2020})
+
+# Benchmark suppression policy (documented in docs/metric_definitions.md):
+# a facility-DRG comparison contributes to the cost index only with at least
+# MIN_DRG_VOLUME_PER_PERIOD discharges in the selected period, and a facility
+# index is suppressed entirely below MIN_FACILITY_VOLUME_PER_PERIOD.
+MIN_DRG_VOLUME_PER_PERIOD = 30
+MIN_FACILITY_VOLUME_PER_PERIOD = 100
+
+# XmR baselines need enough points to estimate a moving-range sigma.
+SPC_BASELINE_MIN_POINTS = 6
 
 
 def ensure_data_dirs() -> None:
