@@ -65,6 +65,19 @@ source .venv/bin/activate         # macOS / Linux
 pip install -r requirements.txt
 ```
 
+Optional: keep large raw files outside the repository (for example when it
+lives in a cloud-synced folder) by setting `SPARCS_BI_DATA_ROOT` to another
+directory. Marts always stay inside the repository.
+
+Acquire data (sample mode for development, full mode for production marts):
+
+```bash
+python -m src.download --sample 50000 --years 2011 2024   # quick samples
+python -m src.download --years 2009 2010 2011 2012 2013 2014 2015 2016 \
+                            2017 2018 2019 2020 2021 2022 2023 2024   # full, ~10 GB
+python -m src.ingest                                      # stage into DuckDB
+```
+
 Build marts (one command, implemented in Milestone 2):
 
 ```bash
@@ -89,9 +102,11 @@ CI runs the same gates on every push and pull request.
 
 ## Status
 
-Milestone-gated delivery. Milestone 0 (foundation) complete: structure,
-tooling, CI. See [docs/architecture.md](docs/architecture.md) for milestone
-status.
+Milestone-gated delivery. Milestone 0 (foundation) and Milestone 1 (source
+registry, download, ingestion, canonical mapping across all 16 annual schemas,
+2009-2024) are complete. See [docs/architecture.md](docs/architecture.md) for
+milestone status and [docs/schema_drift.md](docs/schema_drift.md) for the
+cross-year schema report.
 
 ## License
 

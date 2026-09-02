@@ -18,7 +18,8 @@ flowchart LR
 
 | Layer | Location | Responsibility |
 |---|---|---|
-| Acquisition | `src/download.py` | Retry-safe annual CSV download from a documented source registry |
+| Acquisition | `src/download.py` | Retry-safe annual CSV download from the committed registry (`src/sources.toml`) |
+| Inspection | `scripts/inspect_sources.py` | Regenerate the registry and schema-drift report from live Socrata catalogs |
 | Staging | `src/ingest.py`, `sql/staging/` | Raw to typed DuckDB tables, canonical field mapping across schema drift |
 | Marts | `src/transform.py`, `sql/marts/` | Page-oriented Parquet marts, each with documented grain |
 | Metrics | `src/metrics.py` | Single source of truth for KPI calculations |
@@ -40,7 +41,7 @@ flowchart LR
 | Milestone | Scope | Status |
 |---|---|---|
 | 0 | Foundation: structure, tooling, CI | Complete |
-| 1 | Source registry, download, ingestion, canonical mapping | Not started |
+| 1 | Source registry, download, ingestion, canonical mapping | Complete |
 | 2 | Staging model, marts, metrics, quality output | Not started |
 | 3 | Benchmarks and XmR control charts | Not started |
 | 4 | Streamlit application | Not started |
