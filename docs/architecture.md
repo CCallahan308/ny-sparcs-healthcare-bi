@@ -66,5 +66,5 @@ flowchart LR
 | 1 | Source registry, download, ingestion, canonical mapping | Complete |
 | 2 | Staging model, marts, metrics, quality output | Complete |
 | 3 | Benchmarks and XmR control charts | Complete |
-| 4 | Streamlit application | Not started |
+| 4 | Streamlit application | Complete |
 | 5 | Documentation, deployment, final audit | Not started |
