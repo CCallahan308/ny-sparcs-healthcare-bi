@@ -1,0 +1,29 @@
+# Raw source data and DuckDB warehouse: never committed
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# Marts are committed only when curated and under the deployment size budget;
+# tracked explicitly per milestone decision
+data/marts/*
+!data/marts/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local environment and OS artifacts
+.env
+.DS_Store
+Thumbs.db
+
+# Streamlit local secrets
+.streamlit/secrets.toml

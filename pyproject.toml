@@ -1,0 +1,31 @@
+[project]
+name = "ny-sparcs-healthcare-bi"
+version = "0.1.0"
+description = "In-house healthcare operations BI on NY SPARCS public inpatient discharge data (DuckDB, SQL, Streamlit)"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11,<3.13"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+src = ["src", "app", "tests", "scripts"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # import order
+    "UP",  # pyupgrade
+    "B",   # likely bugs and design pitfalls
+    "SIM", # simplification
+]
+ignore = [
+    "SIM108", # ternary is not always clearer than if/else
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra"
