@@ -57,6 +57,9 @@ flowchart LR
 - Business transformations live in SQL files under `sql/`, not inline Python.
 - Tests run against synthetic fixtures that represent schema variation, never
   against SPARCS extracts.
+- `demo_marts/` carries committed marts built from 50k-row samples; the app
+  serves them only when locally built marts in `data/marts/` are absent, so a
+  clone or hosted deployment renders without the ~10 GB download.
 
 ## Milestone status
 
@@ -67,4 +70,4 @@ flowchart LR
 | 2 | Staging model, marts, metrics, quality output | Complete |
 | 3 | Benchmarks and XmR control charts | Complete |
 | 4 | Streamlit application | Complete |
-| 5 | Documentation, deployment, final audit | Not started |
+| 5 | Documentation, deployment, final audit | Complete |

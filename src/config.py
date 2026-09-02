@@ -29,6 +29,11 @@ DUCKDB_PATH = PROCESSED_DIR / "sparcs.duckdb"
 # Marts are committable artifacts and stay anchored to the repository.
 MARTS_DIR = PROJECT_ROOT / "data" / "marts"
 
+# Committed marts built from 50k-row public samples (see demo_marts/README.md).
+# The app serves these when locally built marts are absent, so a clone or a
+# Streamlit Community Cloud deployment renders without a full download.
+DEMO_MARTS_DIR = PROJECT_ROOT / "demo_marts"
+
 HISTORY_START_YEAR = 2009
 DEFAULT_START_YEAR = 2019
 DEFAULT_END_YEAR = 2024

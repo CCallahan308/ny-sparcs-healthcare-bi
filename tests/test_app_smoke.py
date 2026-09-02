@@ -59,6 +59,25 @@ def test_ensure_data_dirs_creates_tree(tmp_path, monkeypatch) -> None:
 # --- App smoke tests ---------------------------------------------------------
 
 
+def test_load_mart_falls_back_to_demo_marts(tmp_path, monkeypatch) -> None:
+    """With no locally built marts, committed demo marts serve the app."""
+    import pandas as pd
+    from app.components import data
+
+    demo = tmp_path / "demo"
+    demo.mkdir()
+    pd.DataFrame({"year": [2024], "discharges": [7]}).to_parquet(
+        demo / "executive_trends.parquet", index=False
+    )
+    (demo / "run_metadata.json").write_text('{"generated_utc": "test"}', encoding="utf-8")
+    monkeypatch.setattr(config, "MARTS_DIR", tmp_path / "empty_marts")
+    monkeypatch.setattr(config, "DEMO_MARTS_DIR", demo)
+
+    frame = data.load_mart("executive_trends.parquet")
+    assert frame["discharges"].tolist() == [7]
+    assert data.load_run_metadata() == {"generated_utc": "test"}
+
+
 @pytest.fixture()
 def app_marts(pipeline_conn, tmp_path, monkeypatch):
     run_transformations(pipeline_conn, tmp_path)

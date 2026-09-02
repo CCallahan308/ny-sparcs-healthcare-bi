@@ -1,0 +1,100 @@
+{
+  "generated_utc": "2026-09-02T18:33:54+00:00",
+  "source_files": {
+    "2009": {
+      "name": "sparcs_inpatient_2009.csv",
+      "bytes": 21071488
+    },
+    "2011": {
+      "name": "sparcs_inpatient_2011.csv",
+      "bytes": 21206109
+    },
+    "2024": {
+      "name": "sparcs_inpatient_2024.csv",
+      "bytes": 22217709
+    }
+  },
+  "staged_years": [
+    {
+      "year": 2009,
+      "source_file": "sparcs_inpatient_2009.csv",
+      "rows": 50000,
+      "distinct_facilities": 4
+    },
+    {
+      "year": 2011,
+      "source_file": "sparcs_inpatient_2011.csv",
+      "rows": 50000,
+      "distinct_facilities": 11
+    },
+    {
+      "year": 2024,
+      "source_file": "sparcs_inpatient_2024.csv",
+      "rows": 50000,
+      "distinct_facilities": 203
+    }
+  ],
+  "marts": {
+    "data_quality_summary.parquet": {
+      "rows": 3
+    },
+    "executive_kpis.parquet": {
+      "rows": 9336
+    },
+    "executive_trends.parquet": {
+      "rows": 3
+    },
+    "facility_benchmarks.parquet": {
+      "rows": 218
+    },
+    "facility_drg_benchmarks.parquet": {
+      "rows": 17483
+    },
+    "payer_exposure.parquet": {
+      "rows": 1057
+    },
+    "process_control_series.parquet": {
+      "rows": 167
+    },
+    "service_line_summary.parquet": {
+      "rows": 1123
+    }
+  },
+  "payer_values_mapped_to_other": [
+    {
+      "year": 2009,
+      "payer_raw": "Other Non-Federal Program",
+      "rows": 733
+    },
+    {
+      "year": 2009,
+      "payer_raw": "Workers Compensation",
+      "rows": 500
+    },
+    {
+      "year": 2009,
+      "payer_raw": "Unknown",
+      "rows": 1
+    },
+    {
+      "year": 2011,
+      "payer_raw": "Miscellaneous/Other",
+      "rows": 757
+    },
+    {
+      "year": 2011,
+      "payer_raw": "Department of Corrections",
+      "rows": 11
+    },
+    {
+      "year": 2024,
+      "payer_raw": "Miscellaneous/Other",
+      "rows": 549
+    },
+    {
+      "year": 2024,
+      "payer_raw": "Department of Corrections",
+      "rows": 37
+    }
+  ]
+}

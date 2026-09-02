@@ -24,6 +24,17 @@ def marts_dir() -> Path:
     return config.MARTS_DIR
 
 
+def resolve_mart_path(file_name: str) -> Path | None:
+    """Locally built marts win; committed demo marts serve as the fallback."""
+    local = config.MARTS_DIR / file_name
+    if local.exists():
+        return local
+    demo = config.DEMO_MARTS_DIR / file_name
+    if demo.exists():
+        return demo
+    return None
+
+
 @st.cache_data(show_spinner=False)
 def _read_parquet(path_str: str, _mtime: float) -> pd.DataFrame:
     return pd.read_parquet(path_str)
@@ -31,8 +42,8 @@ def _read_parquet(path_str: str, _mtime: float) -> pd.DataFrame:
 
 def load_mart(file_name: str) -> pd.DataFrame:
     """Load a mart with a clear failure message when it is missing."""
-    path = marts_dir() / file_name
-    if not path.exists():
+    path = resolve_mart_path(file_name)
+    if path is None:
         st.error(
             f"Required mart is missing: {file_name}. "
             "Build it with `python scripts/run_pipeline.py` first."
@@ -43,8 +54,8 @@ def load_mart(file_name: str) -> pd.DataFrame:
 
 def load_run_metadata() -> dict | None:
     """Pipeline run metadata, or None before the first build."""
-    path = marts_dir() / "run_metadata.json"
-    if not path.exists():
+    path = resolve_mart_path("run_metadata.json")
+    if path is None:
         return None
     return json.loads(path.read_text(encoding="utf-8"))
 
