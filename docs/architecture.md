@@ -3,6 +3,27 @@
 Planned pipeline, implemented progressively under milestone-gated delivery.
 Status per layer is tracked at the bottom of this document.
 
+## Marts
+
+Page-oriented Parquet marts, each with a single documented grain. Measures
+are additive so every KPI derives correctly at any filter scope. Zero
+denominators yield NULL, never errors. Metric semantics live in
+`src/metrics.py`; SQL implements the same formulas.
+
+| Mart | Grain | Key measures |
+|---|---|---|
+| `executive_kpis.parquet` | year x facility x county x service line (APR-MDC) x payer class | discharges, estimated cost, charges, bed days, severity/ED/post-acute counts |
+| `executive_trends.parquet` | year (statewide) | the six executive KPIs plus derived rates |
+| `payer_exposure.parquet` | year x facility x county x payer class | discharges, estimated cost (exposure, not margin) |
+| `service_line_summary.parquet` | year x service line (APR-MDC) x APR-DRG | volume, estimated cost, ALOS, high-severity counts |
+| `facility_benchmarks.parquet` | year x facility (redacted excluded) | volume, cost per discharge, ALOS, severity share; cost index lands in Milestone 3 |
+| `process_control_series.parquet` | metric x series x year | numerator, denominator, value (statewide 5 metrics + per-MDC ALOS and cost) |
+| `data_quality_summary.parquet` | year | completeness, invalid-value counts, redaction share, schema family |
+
+Run metadata (`run_metadata.json`) records the build time, source files,
+per-year staging counts, mart row counts, and payer values that fell to
+`Other`, so nothing is silently reclassified.
+
 ## Pipeline
 
 ```mermaid
@@ -42,7 +63,7 @@ flowchart LR
 |---|---|---|
 | 0 | Foundation: structure, tooling, CI | Complete |
 | 1 | Source registry, download, ingestion, canonical mapping | Complete |
-| 2 | Staging model, marts, metrics, quality output | Not started |
+| 2 | Staging model, marts, metrics, quality output | Complete |
 | 3 | Benchmarks and XmR control charts | Not started |
 | 4 | Streamlit application | Not started |
 | 5 | Documentation, deployment, final audit | Not started |

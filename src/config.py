@@ -33,6 +33,18 @@ HISTORY_START_YEAR = 2009
 DEFAULT_START_YEAR = 2019
 DEFAULT_END_YEAR = 2024
 
+# Mart table -> exported Parquet file name (single source for transform and
+# quality validation).
+MART_EXPORTS: dict[str, str] = {
+    "mart_executive_kpis": "executive_kpis.parquet",
+    "mart_executive_trends": "executive_trends.parquet",
+    "mart_payer_exposure": "payer_exposure.parquet",
+    "mart_service_line_summary": "service_line_summary.parquet",
+    "mart_facility_benchmarks": "facility_benchmarks.parquet",
+    "mart_process_control_series": "process_control_series.parquet",
+    "mart_data_quality_summary": "data_quality_summary.parquet",
+}
+
 # 2020 is treated as an assignable-cause period: excluded from baseline
 # control-limit calculation by default, retained in displayed series.
 EXCLUDED_BASELINE_YEARS = frozenset({2020})

@@ -102,11 +102,14 @@ CI runs the same gates on every push and pull request.
 
 ## Status
 
-Milestone-gated delivery. Milestone 0 (foundation) and Milestone 1 (source
-registry, download, ingestion, canonical mapping across all 16 annual schemas,
-2009-2024) are complete. See [docs/architecture.md](docs/architecture.md) for
-milestone status and [docs/schema_drift.md](docs/schema_drift.md) for the
-cross-year schema report.
+Milestone-gated delivery. Milestones 0-2 complete: foundation, source
+registry and ingestion across all 16 annual schemas (2009-2024), normalized
+staging, the seven Parquet marts, metric module, data-quality output, and a
+one-command pipeline. See [docs/architecture.md](docs/architecture.md) for
+milestone status and mart grains,
+[docs/schema_drift.md](docs/schema_drift.md) for the cross-year schema
+report, and [docs/metric_definitions.md](docs/metric_definitions.md) for KPI
+definitions.
 
 ## License
 
