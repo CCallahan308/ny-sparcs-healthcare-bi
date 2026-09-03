@@ -91,8 +91,43 @@ def grouped_share_bars(categories, series: dict[str, list], colors: Mapping[str,
                 marker_color=colors[name],
             )
         )
-    fig.update_layout(barmode="group", showlegend=True)
+    tallest = max(max(values) for values in series.values())
+    fig.update_layout(
+        barmode="group",
+        showlegend=True,
+        # Headroom so the top tick and bar labels never clip.
+        yaxis={"range": [0, min(1.0, tallest * 1.15)]},
+    )
     return _finish(fig, y_pct=True)
+
+
+def horizontal_stacked_share(
+    pivot: pd.DataFrame, colors: Mapping[str, str] | None = None
+) -> go.Figure:
+    """Row-per-category stacked shares; readable for long DRG labels."""
+    palette = colors or PAYER_COLORS
+    fig = go.Figure()
+    for column in pivot.columns:
+        fig.add_trace(
+            go.Bar(
+                y=pivot.index,
+                x=pivot[column],
+                name=str(column),
+                orientation="h",
+                marker_color=palette.get(str(column), MUTED),
+            )
+        )
+    fig.update_layout(
+        barmode="stack",
+        showlegend=len(pivot.columns) > 1,
+        height=max(360, 34 * len(pivot.index) + 90),
+        margin={"l": 10, "r": 10, "t": 30, "b": 10},
+        legend={"orientation": "h", "yanchor": "bottom", "y": 1.02},
+        xaxis={"tickformat": ".0%", "gridcolor": GRID},
+        yaxis={"autorange": "reversed", "showgrid": False},
+        hovermode="y unified",
+    )
+    return fig
 
 
 def horizontal_ranked_bar(labels, values, y_prefix: str = "") -> go.Figure:

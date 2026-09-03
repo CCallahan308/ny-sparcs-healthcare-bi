@@ -16,6 +16,12 @@ def fmt_dollars(value: float | None) -> str:
     return f"${value:,.0f}"
 
 
+def md_dollars(value: float | None) -> str:
+    """Markdown-safe currency: paired $ signs render as LaTeX math in Streamlit."""
+    raw = fmt_dollars(value)
+    return "n/a" if raw == "n/a" else f"\\{raw}"
+
+
 def fmt_int(value: float | None) -> str:
     return "n/a" if value is None else f"{value:,.0f}"
 

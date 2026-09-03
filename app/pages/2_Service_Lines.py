@@ -68,23 +68,25 @@ st.caption(
 )
 
 st.markdown("#### Severity mix for the same top 15")
-severity = top.sort_values("high_severity_discharges", ascending=True)
+severity = summary.nlargest(15, "estimated_cost")
 severity = severity.assign(
     drg_label=[
-        f"{description} ({code})"
-        for description, code in zip(
-            severity["apr_drg_description"], severity["apr_drg_code"], strict=True
+        f"{code}: {description[:38]}{'...' if len(description) > 38 else ''}"
+        for code, description in zip(
+            severity["apr_drg_code"], severity["apr_drg_description"], strict=True
         )
     ],
     low=1 - severity["high_severity_share"],
     high=severity["high_severity_share"],
 ).set_index("drg_label")[["low", "high"]]
-fig = charts.stacked_share_bar(
-    severity,
-    colors={"low": "#C6DCD8", "high": "#0F6E63"},
+st.plotly_chart(
+    charts.horizontal_stacked_share(
+        severity,
+        colors={"low": "#C6DCD8", "high": "#0F6E63"},
+    ),
+    width="stretch",
+    key="drg_severity_mix",
 )
-fig.update_layout(showlegend=True)
-st.plotly_chart(fig, width="stretch", key="drg_severity_mix")
 st.caption(
     "High severity = APR severity-of-illness 3 or 4. Severity code 0 "
     "(unclassified) counts as not high. Denominator: discharges per DRG."

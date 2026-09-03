@@ -52,6 +52,15 @@ mdc_metrics = [
     if metric in set(series_mart["metric"])
 ]
 
+years_available = sorted({int(year) for year in series_mart["discharge_year"]})
+first_year, last_year = years_available[0], years_available[-1]
+midpoint = years_available[max(len(years_available) // 2 - 1, 0)]
+WINDOW_OPTIONS = [
+    (f"Full history ({first_year}-{last_year})", None),
+    (f"Early half ({first_year}-{midpoint})", (first_year, midpoint)),
+    (f"Late half ({midpoint + 1}-{last_year})", (midpoint + 1, last_year)),
+]
+
 with st.sidebar:
     st.markdown("#### Series")
     metric = st.selectbox(
@@ -72,6 +81,14 @@ with st.sidebar:
             "Service line", options.index.tolist(), format_func=lambda sid: options[sid]
         )
         series_label = options[series_id]
+    st.markdown("#### Baseline")
+    window_label = st.selectbox("Baseline window", [label for label, _ in WINDOW_OPTIONS])
+    baseline_window = dict(WINDOW_OPTIONS)[window_label]
+    st.caption(
+        "The window chooses which years shape the centerline and limits; "
+        "every year is still plotted and evaluated. Shorter windows suit "
+        "trending series, where a full-history baseline flags most years."
+    )
 
 subset = series_mart[(series_mart["metric"] == metric) & (series_mart["series_id"] == series_id)]
 annual: dict[int, float] = {
@@ -83,7 +100,7 @@ if not annual:
     st.stop()
 
 st.markdown(f"#### {METRIC_LABELS[metric]}: {series_label}")
-result = control_charts.xmr(annual)
+result = control_charts.xmr(annual, baseline_window=baseline_window)
 prefix = "$" if "cost" in metric else ""
 
 st.plotly_chart(
@@ -99,12 +116,24 @@ if not result.is_sufficient:
         "the series is still shown for context."
     )
 else:
+    baseline_span = f"{result.baseline_years[0]}-{result.baseline_years[-1]}"
     st.caption(
         f"Centerline {prefix}{result.center_line:,.2f} from "
-        f"{len(result.baseline_years)} baseline years; sigma estimated from "
-        "the mean moving range / 1.128; limits at +/- 3 sigma. Shaded year(s) "
-        "are excluded from the baseline and annotated on the chart."
+        f"{len(result.baseline_years)} baseline years ({baseline_span}); sigma "
+        "estimated from the mean moving range / 1.128; limits at +/- 3 sigma. "
+        "Shaded year(s) are excluded from the baseline and annotated on the "
+        "chart."
     )
+    eligible_years = [year for year in annual if year not in result.excluded_years]
+    flagged_years = {violation.year for violation in result.violations}
+    if eligible_years and len(flagged_years) / len(eligible_years) > 0.5:
+        st.warning(
+            f"{len(flagged_years) / len(eligible_years):.0%} of years signal "
+            "against this baseline: the series carries a sustained trend or "
+            "level shift, so read the flags as one shifting process rather "
+            "than separate year events. A shorter baseline window separates "
+            "recent behavior from history."
+        )
 
     rows = []
     for violation in result.violations:
@@ -134,7 +163,9 @@ else:
 
 with st.expander("Methodology"):
     st.markdown(
-        "- Centerline CL = mean of baseline years (2020 excluded by default).\n"
+        "- Centerline CL = mean of baseline years (2020 excluded by default). "
+        "The baseline window in the sidebar restricts which years shape CL "
+        "and the limits; every year stays plotted and evaluated.\n"
         "- Moving range MR = |value(t) - value(t-1)| over consecutive baseline "
         "years; excluded years are removed before pairing, so ranges bridge "
         "the gap (a documented, slightly conservative choice).\n"

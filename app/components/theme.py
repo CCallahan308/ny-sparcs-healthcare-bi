@@ -54,6 +54,8 @@ _CSS = """
   .caption {color: #5A6260; font-size: 12.5px;}
   [data-testid="stSidebar"] {background: #F7F8F8;}
   [data-testid="stSidebar"] * {font-size: 13.5px;}
+  [data-baseweb="slider"] [role="track"] {background: #DCE4E2 !important;}
+  [data-baseweb="slider"] [role="track"] > div {background: #9FBFBA !important;}
 </style>
 """
 

@@ -13,6 +13,7 @@ Playwright browser download is needed. Marts must already be built.
 from __future__ import annotations
 
 import contextlib
+import os
 import subprocess
 import sys
 import time
@@ -24,7 +25,8 @@ sys.path.insert(0, str(ROOT))
 from playwright.sync_api import sync_playwright  # noqa: E402
 
 OUT_DIR = ROOT / "docs" / "screenshots"
-PORT = 8502
+# CAPTURE_PORT avoids clashing with a developer's running instance.
+PORT = int(os.environ.get("CAPTURE_PORT", "8502"))
 BASE_URL = f"http://localhost:{PORT}"
 
 PAGE_LABELS = [

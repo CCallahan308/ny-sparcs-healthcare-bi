@@ -35,8 +35,8 @@ The application answers it in six pages:
 | ![Executive Summary](docs/screenshots/executive_summary.png) | ![Process Control](docs/screenshots/process_control.png) |
 | ![Facility Benchmarks](docs/screenshots/facility_benchmarks.png) | ![Payer Exposure](docs/screenshots/payer_exposure.png) |
 
-All four run on the committed demo marts (50k-row samples); a full build
-populates every year from 2009 to 2024.
+Captured from a full 2009-2024 build. A clone without local marts renders
+the same views from the committed demo marts (50k-row samples).
 
 ## Data source
 

@@ -26,17 +26,17 @@ theme.page_header(
 )
 
 st.markdown("#### Coverage and completeness by year")
-share_columns = [
-    "facility_redacted_share",
-    "apr_drg_missing_share",
-    "severity_missing_share",
-    "los_missing_share",
-    "ed_indicator_missing_share",
-    "payer_unknown_share",
-    "disposition_missing_share",
-    "charges_missing_share",
-    "costs_missing_share",
-]
+SHARE_LABELS = {
+    "facility_redacted_share": "Facility redacted",
+    "apr_drg_missing_share": "DRG missing",
+    "severity_missing_share": "Severity missing",
+    "los_missing_share": "LOS missing",
+    "ed_indicator_missing_share": "ED indicator missing",
+    "payer_unknown_share": "Payer unknown",
+    "disposition_missing_share": "Disposition missing",
+    "charges_missing_share": "Charges missing",
+    "costs_missing_share": "Costs missing",
+}
 column_config: dict = {
     "year": "Year",
     "source_file": "Source file",
@@ -44,9 +44,9 @@ column_config: dict = {
     "distinct_facilities": st.column_config.NumberColumn("Facilities", format=",.0f"),
     "distinct_apr_drgs": st.column_config.NumberColumn("APR-DRGs", format=",.0f"),
 }
-for column in share_columns:
+for column, label in SHARE_LABELS.items():
     if column in quality.columns:
-        column_config[column] = st.column_config.NumberColumn(column, format=".1%")
+        column_config[column] = st.column_config.NumberColumn(label, format=".1%")
 column_config.update(
     {
         "negative_charges": st.column_config.NumberColumn("Negative charges", format=",.0f"),
@@ -66,7 +66,9 @@ st.caption(
     "Redacted share: records whose facility fields were redacted at source "
     "(for example abortion-related discharges); they count in statewide "
     "totals but never in facility comparisons. LOS capped: source codes "
-    "stays of 120 days or more as '120 +', staged as 120 with a flag."
+    "stays of 120 days or more as '120 +', staged as 120 with a flag. "
+    "Missing shares sit at or near zero by design; SPARCS is a highly "
+    "complete administrative source."
 )
 
 st.markdown("#### Schema drift across annual files")
@@ -99,20 +101,28 @@ else:
 st.markdown("#### Pipeline run metadata")
 metadata = data.load_run_metadata()
 if metadata:
-    st.json(
-        {
-            "generated_utc": metadata["generated_utc"],
-            "staged_years": {
-                str(
-                    entry["year"]
-                ): f"{entry['rows']:,} rows, {entry['distinct_facilities']} facilities"
-                for entry in metadata["staged_years"]
+    staged = metadata.get("staged_years", [])
+    total_rows = sum(entry["rows"] for entry in staged)
+    summary_columns = st.columns(3)
+    summary_columns[0].metric("Discharge years staged", f"{len(staged)}")
+    summary_columns[1].metric("Rows staged", f"{total_rows:,}")
+    summary_columns[2].metric("Marts built", f"{len(metadata.get('marts', {}))}")
+    with st.expander("Run detail (JSON)"):
+        st.json(
+            {
+                "generated_utc": metadata["generated_utc"],
+                "staged_years": {
+                    str(entry["year"]): f"{entry['rows']:,} rows, "
+                    f"{entry['distinct_facilities']} facilities"
+                    for entry in staged
+                },
+                "marts": {
+                    name: f"{meta['rows']:,} rows" for name, meta in metadata["marts"].items()
+                },
+                "payer_values_mapped_to_other": metadata["payer_values_mapped_to_other"][:10],
             },
-            "marts": {name: f"{meta['rows']:,} rows" for name, meta in metadata["marts"].items()},
-            "payer_values_mapped_to_other": metadata["payer_values_mapped_to_other"][:10],
-        },
-        expanded=2,
-    )
+            expanded=1,
+        )
 else:
     st.info("No run metadata found; build marts with scripts/run_pipeline.py.")
 

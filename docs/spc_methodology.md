@@ -27,6 +27,19 @@ remaining in the displayed series and remaining eligible to be flagged. The
 exclusion set is configuration (`EXCLUDED_BASELINE_YEARS`), not hidden logic,
 and the app annotates excluded years on the chart.
 
+## Baseline window
+
+A full-history baseline on a strongly trending series (statewide estimated
+cost per discharge rises from about $11.4K in 2009 to $26.4K in 2024) flags
+most years, which carries little information: the process is simply not
+stable at one level. The Process Control page therefore offers a baseline
+window (full history, early half, late half). The window chooses which years
+shape the centerline, sigma, and limits; every year stays plotted and is
+still evaluated against those limits. When more than half the years signal
+against the current baseline, the page states that the series carries a
+sustained trend or level shift and the flags should be read as one shifting
+process rather than separate year events.
+
 ## Special-cause rules
 
 Evaluated on the full displayed series, excluded years included:

@@ -138,16 +138,25 @@ def xmr(
     series: Mapping[int, float],
     excluded_years: frozenset[int] | set[int] = EXCLUDED_BASELINE_YEARS,
     min_baseline_points: int = SPC_BASELINE_MIN_POINTS,
+    baseline_window: tuple[int, int] | None = None,
 ) -> XmRResult:
     """Compute XmR limits and special-cause signals for an annual series.
 
     `series` maps year -> value. Excluded years stay in the displayed series
     and are still evaluated against the limits; they simply do not shape the
-    baseline.
+    baseline. `baseline_window` restricts which years shape the baseline to
+    an inclusive (start, end) range; limits still apply to every year. A
+    window matters for strongly trending series, where a full-history
+    baseline flags most years and carries little information.
     """
     ordered_years = sorted(series)
     excluded = tuple(year for year in ordered_years if year in excluded_years)
-    baseline_years = tuple(year for year in ordered_years if year not in excluded_years)
+    baseline_years = tuple(
+        year
+        for year in ordered_years
+        if year not in excluded_years
+        and (baseline_window is None or baseline_window[0] <= year <= baseline_window[1])
+    )
     baseline = [float(series[year]) for year in baseline_years]
 
     if len(baseline) < min_baseline_points:
@@ -162,6 +171,11 @@ def xmr(
                 f"insufficient baseline observations: {len(baseline)} available, "
                 f"{min_baseline_points} required after excluding "
                 f"{sorted(excluded_years)}"
+                + (
+                    f" and restricting the baseline to {baseline_window[0]}-{baseline_window[1]}"
+                    if baseline_window
+                    else ""
+                )
             ),
             violations=(),
         )

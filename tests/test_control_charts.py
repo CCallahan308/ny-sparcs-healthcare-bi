@@ -104,3 +104,20 @@ def test_violation_language_avoids_causal_claims() -> None:
     for violation in result.violations:
         assert "caused" not in violation.detail.lower()
         assert "signal for investigation" in violation.detail
+
+
+def test_baseline_window_shapes_limits_but_evaluates_all_years() -> None:
+    years = list(range(2009, 2025))
+    values = [10 + (year - 2009) for year in years]  # pure upward trend
+    series = dict(zip(years, values, strict=True))
+
+    early = control_charts.xmr(series, excluded_years=set(), baseline_window=(2009, 2016))
+    assert early.baseline_years == tuple(range(2009, 2017))
+    assert early.center_line == pytest.approx(sum(values[:8]) / 8)  # 13.5
+    assert 2024 in {violation.year for violation in early.violations}
+
+    # Motivating case: a full-history baseline on a trending series flags
+    # most years, which is why the window control exists.
+    full = control_charts.xmr(series, excluded_years=set())
+    full_share = len({violation.year for violation in full.violations}) / len(years)
+    assert full_share > 0.5

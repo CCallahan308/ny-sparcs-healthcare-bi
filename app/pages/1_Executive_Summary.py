@@ -55,8 +55,8 @@ current = data.compute_kpis(scope[scope["discharge_year"] == current_year])
 prior = data.compute_kpis(scope[scope["discharge_year"] == prior_year]) if prior_year else None
 
 st.markdown(
-    f"### Selected period focus: {current_year}"
-    + (f" (compared with {prior_year})" if prior_year else " (no prior year in scope)")
+    f"### Focus year: {current_year}"
+    + (f" (deltas vs {prior_year})" if prior_year else " (no prior year in scope)")
 )
 
 cards = [
@@ -96,9 +96,10 @@ for index, (label, value, delta) in enumerate(cards):
     columns[index % 3].metric(label, value, delta, delta_color="off")
 
 st.caption(
-    "Grain: year x facility x county x service line x payer class, aggregated "
-    "to the selected scope. Estimated costs only; deltas are period-over-period "
-    "and carry no direction judgment."
+    "Cards show the focus year with period-over-period deltas; the charts "
+    "below cover the full selected range. Grain: year x facility x county x "
+    "service line x payer class, aggregated to the selected scope. Estimated "
+    "costs only; deltas carry no direction judgment."
 )
 
 yearly = (
@@ -165,9 +166,9 @@ st.caption(
 if prior:
     st.info(
         f"In the selected scope, {fmt.fmt_int(current['discharges'])} discharges "
-        f"carried an estimated cost of {fmt.fmt_dollars(current['estimated_cost'])} "
+        f"carried an estimated cost of {fmt.md_dollars(current['estimated_cost'])} "
         f"in {current_year}, with cost per discharge of "
-        f"{fmt.fmt_dollars(current['cost_per_discharge'])} and average length of "
+        f"{fmt.md_dollars(current['cost_per_discharge'])} and average length of "
         f"stay of {fmt.fmt_alos(current['alos'])} days. These figures describe "
         "the data; they do not establish causes."
     )
