@@ -69,3 +69,33 @@ SELECT
         ELSE 'NONE'
     END AS clinical_grouping
 FROM stg_discharges d;
+
+-- Canonical descriptions. NY DOH rewords APR-DRG and MDC labels across
+-- years (for example APR-DRG 720 reads "SEPTICEMIA & DISSEMINATED
+-- INFECTIONS" through 2020 and "SEPTICEMIA AND DISSEMINATED INFECTIONS"
+-- from 2021; 332 codes drift across 2009-2024). Grouping by code plus
+-- raw description would split every reworded code into duplicate rows,
+-- so each code carries exactly one label everywhere: the wording of its
+-- most recent year (ties inside a year broken by last wording, so the
+-- pick is deterministic). Rows whose own description is blank inherit
+-- the canonical label for their code.
+CREATE OR REPLACE TABLE stg_normalized AS
+SELECT
+    n.* EXCLUDE (mdc_description, apr_drg_description),
+    COALESCE(m.mdc_description, n.mdc_description) AS mdc_description,
+    COALESCE(g.apr_drg_description, n.apr_drg_description) AS apr_drg_description
+FROM stg_normalized n
+LEFT JOIN (
+    SELECT mdc_code,
+           arg_max(mdc_description, (discharge_year, mdc_description)) AS mdc_description
+    FROM stg_normalized
+    WHERE mdc_code IS NOT NULL AND mdc_description IS NOT NULL
+    GROUP BY mdc_code
+) m ON n.mdc_code = m.mdc_code
+LEFT JOIN (
+    SELECT apr_drg_code,
+           arg_max(apr_drg_description, (discharge_year, apr_drg_description)) AS apr_drg_description
+    FROM stg_normalized
+    WHERE apr_drg_code IS NOT NULL AND apr_drg_description IS NOT NULL
+    GROUP BY apr_drg_code
+) g ON n.apr_drg_code = g.apr_drg_code;

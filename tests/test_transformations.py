@@ -133,3 +133,62 @@ def test_normalized_row_count_matches_staging(
         "SELECT (SELECT COUNT(*) FROM stg_discharges), (SELECT COUNT(*) FROM stg_normalized)",
     )[0]
     assert counts[0] == counts[1]
+
+
+def test_drg_description_drift_gets_one_canonical_label(
+    tmp_path,
+    monkeypatch,  # noqa: ANN001
+) -> None:
+    """A reworded DRG keeps one code, one label: the latest year's wording."""
+    from src import ingest
+    from src.transform import SQL_STAGING_DIR, execute_sql_dir
+    from tests.conftest import FIXTURE_YEARS, FIXTURES
+
+    # Simulate a NY DOH reword: 2024 renames code 194, and one 2024 row
+    # loses its description entirely (must inherit the canonical label).
+    drifted = (
+        (FIXTURES / "sparcs_2024_style.csv")
+        .read_text(encoding="utf-8")
+        .replace("Cardiac arrhythmia w CC", "Cardiac Arrhythmia with CC")
+        .replace("Cardiac ablation w/o MCC", "", 1)
+    )
+    drifted_path = tmp_path / "sparcs_2024_drifted.csv"
+    drifted_path.write_text(drifted, encoding="utf-8")
+
+    conn = duckdb.connect()
+    try:
+        ingest.ensure_staging(conn)
+        for name, year in FIXTURE_YEARS.items():
+            source = drifted_path if year == 2024 else FIXTURES / name
+            ingest.ingest_file(conn, source, year)
+        execute_sql_dir(conn, SQL_STAGING_DIR)
+
+        drifted_codes = conn.execute(
+            """
+            SELECT apr_drg_code, COUNT(DISTINCT apr_drg_description) AS variants
+            FROM stg_normalized
+            WHERE apr_drg_code IS NOT NULL
+            GROUP BY apr_drg_code
+            HAVING COUNT(DISTINCT apr_drg_description) > 1
+            """
+        ).fetchall()
+        assert drifted_codes == [], f"codes with conflicting labels: {drifted_codes}"
+
+        code_194 = conn.execute(
+            """
+            SELECT DISTINCT apr_drg_description, discharge_year
+            FROM stg_normalized WHERE apr_drg_code = '194'
+            ORDER BY discharge_year
+            """
+        ).fetchall()
+        assert {label for label, _ in code_194} == {"Cardiac Arrhythmia with CC"}, code_194
+
+        blank_desc = conn.execute(
+            """
+            SELECT COUNT(*) FROM stg_normalized
+            WHERE apr_drg_code IS NOT NULL AND TRIM(apr_drg_description) = ''
+            """
+        ).fetchone()[0]
+        assert blank_desc == 0, "blank descriptions should inherit the canonical label"
+    finally:
+        conn.close()

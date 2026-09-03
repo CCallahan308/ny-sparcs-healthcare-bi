@@ -8,6 +8,7 @@ or a fresh build).
 from __future__ import annotations
 
 import json
+import math
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -83,7 +84,11 @@ def validate_marts(conn: duckdb.DuckDBPyConnection, marts_dir: Path) -> list[str
             issues.append(
                 f"reconciliation: trends discharges {trends[0]} != staging {staging_totals[0]}"
             )
-        if abs((trends[1] or 0) - (staging_totals[1] or 0)) > 0.01:
+        # Float sums over tens of millions of rows differ by scan order at
+        # the cent level; reconcile on a relative tolerance instead. 1e-9 of
+        # a ~$600B total stays under a dollar while any dropped year,
+        # facility, or row is off by millions.
+        if not math.isclose(trends[1] or 0.0, staging_totals[1] or 0.0, rel_tol=1e-9, abs_tol=0.01):
             issues.append(
                 f"reconciliation: trends estimated_cost {trends[1]} != staging {staging_totals[1]}"
             )
