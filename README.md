@@ -168,6 +168,9 @@ no local build exists, requirements are pinned, and no secrets are needed.
    matching the CI environment. The project supports Python 3.11 and 3.12.
 1. No secrets or custom build commands are required.
 
+The Arrow pin matches the 24.0.0 version installed by Community Cloud's
+bootstrap, which replaced the previously requested 25.0.1 during deployment.
+
 The default hosted demo serves the committed marts (under 0.5 MB), built
 from **50,000 public records each for 2009, 2011, and 2024**. Every page
 discloses sample fallback and labels sample-wide comparisons accordingly.
