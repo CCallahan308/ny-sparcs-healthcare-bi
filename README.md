@@ -24,7 +24,7 @@ The application answers it in six pages:
 | Executive Summary | Where do volume, cost, and throughput stand for the selected scope, and how do they compare with the prior year? |
 | Service Lines | Which service lines and APR-DRGs concentrate estimated cost, and which are moving? |
 | Payer Exposure | How are discharges and estimated cost distributed across payer classes, and how concentrated is that exposure? |
-| Facility Benchmarks | Which facilities differ from statewide patterns after adjusting for case mix, and by how much? |
+| Facility Benchmarks | Which facilities differ from patterns in the selected data after adjusting for case mix, and by how much? |
 | Process Control | Which annual metrics show signals for investigation rather than routine variation? |
 | Data Quality | What is in the data, what is missing, and what should not be compared across years? |
 
@@ -54,7 +54,7 @@ Facts that shape every interpretation, enforced in code and captions:
 - APR-DRG is the stable clinical key across years; CCS (pre-2018) and CCSR
   (2018+) categories are never compared across that boundary.
 - Abortion-related discharges have facility fields redacted at source; they
-  count in statewide totals and never in facility comparisons.
+  count in dataset totals and never in facility comparisons.
 
 See [docs/limitations.md](docs/limitations.md) before quoting any figure.
 
@@ -100,7 +100,7 @@ calculated values. Full detail in
 | Facility cost index | Case-mix adjusted index, below |
 
 **Facility cost index** (indirect standardization): per facility and APR-DRG,
-cost per discharge = estimated cost / discharges; the statewide benchmark for
+cost per discharge = estimated cost / discharges; the benchmark for
 a DRG is the median of facility-level cost per discharge among qualifying
 facilities; expected benchmark cost = sum over qualifying DRGs of discharges x
 that DRG's median; index = total estimated cost / expected benchmark cost.
@@ -164,12 +164,28 @@ no local build exists, requirements are pinned, and no secrets are needed.
 1. Push this repository to GitHub.
 1. At [share.streamlit.io](https://share.streamlit.io), connect the GitHub
    account, and create an app from this repository.
-1. Main file path: `app/Home.py`. Leave the Python version at 3.11 or later.
-1. No advanced settings, secrets, or build commands are required.
+1. Main file path: `app/Home.py`. Select Python **3.11** in Advanced settings,
+   matching the CI environment. The project supports Python 3.11 and 3.12.
+1. No secrets or custom build commands are required.
 
-The free tier serves the demo marts (under 0.5 MB). Full marts exceed free
-tier resources; host those on your own infrastructure, or point
-`SPARCS_BI_DATA_ROOT` at a mounted data directory when self-hosting.
+The Arrow pin matches the 24.0.0 version installed by Community Cloud's
+bootstrap, which replaced the previously requested 25.0.1 during deployment.
+
+The default hosted demo serves the committed marts (under 0.5 MB), built
+from **50,000 public records each for 2009, 2011, and 2024**. Every page
+discloses sample fallback and labels sample-wide comparisons accordingly.
+Sample aggregates are not statewide totals or hospital performance findings.
+Three sample years cannot support the six-point control-chart baseline;
+the app shows the available series and explains the missing limits.
+
+Locally built `data/marts/` files take precedence one mart at a time.
+Local file presence does not establish full statewide coverage: local marts
+can also come from sample downloads. Local views use neutral dataset labels.
+Data Quality reads run metadata beside its displayed mart and reports when
+that associated metadata is missing; it does not borrow another build's metadata.
+`SPARCS_BI_DATA_ROOT` changes raw and working-data paths, not the mart path.
+Hosting full extracts and marts requires separate resource sizing; this
+sample deployment does not require those downloads.
 
 ## Testing and CI
 

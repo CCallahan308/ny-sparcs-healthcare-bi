@@ -6,10 +6,13 @@ directory, so CI needs no real SPARCS downloads.
 
 from __future__ import annotations
 
+import json
+import shutil
 from pathlib import Path
 
 import pytest
 from src import config
+from src.quality import write_run_metadata
 from src.transform import run_transformations
 from streamlit.testing.v1 import AppTest
 
@@ -76,13 +79,50 @@ def test_load_mart_falls_back_to_demo_marts(tmp_path, monkeypatch) -> None:
     frame = data.load_mart("executive_trends.parquet")
     assert frame["discharges"].tolist() == [7]
     assert data.load_run_metadata() == {"generated_utc": "test"}
+    assert data.is_demo_mart("executive_trends.parquet")
+    assert not data.is_demo_mart("missing.parquet")
+
+
+def test_local_mart_and_metadata_take_precedence_without_hiding_demo_provenance(
+    tmp_path, monkeypatch
+) -> None:
+    import pandas as pd
+    from app.components import data
+
+    local, demo = tmp_path / "local", tmp_path / "demo"
+    local.mkdir()
+    demo.mkdir()
+    for directory, discharges in [(local, 19), (demo, 7)]:
+        pd.DataFrame({"discharges": [discharges]}).to_parquet(
+            directory / "executive_kpis.parquet", index=False
+        )
+        (directory / "run_metadata.json").write_text(
+            json.dumps({"staged_years": [{"year": 2024, "rows": discharges}]}),
+            encoding="utf-8",
+        )
+    monkeypatch.setattr(config, "MARTS_DIR", local)
+    monkeypatch.setattr(config, "DEMO_MARTS_DIR", demo)
+
+    assert data.load_mart("executive_kpis.parquet")["discharges"].tolist() == [19]
+    assert not data.is_demo_mart("executive_kpis.parquet")
+    assert data.load_run_metadata()["staged_years"][0]["rows"] == 19
+    assert data.load_demo_run_metadata()["staged_years"][0]["rows"] == 7
 
 
 @pytest.fixture()
 def app_marts(pipeline_conn, tmp_path, monkeypatch):
-    run_transformations(pipeline_conn, tmp_path)
+    row_counts = run_transformations(pipeline_conn, tmp_path)
+    write_run_metadata(pipeline_conn, tmp_path, row_counts, {})
     monkeypatch.setattr(config, "MARTS_DIR", tmp_path)
     yield tmp_path
+
+
+@pytest.fixture()
+def demo_app_marts(app_marts, tmp_path, monkeypatch):
+    """Serve only synthetic fixture-built marts through the sample fallback."""
+    monkeypatch.setattr(config, "DEMO_MARTS_DIR", app_marts)
+    monkeypatch.setattr(config, "MARTS_DIR", tmp_path / "no_local_marts")
+    yield app_marts
 
 
 @pytest.mark.parametrize("page", PAGES)
@@ -90,6 +130,97 @@ def test_page_renders_without_exceptions(app_marts, page: str) -> None:
     app = AppTest.from_file(str(APP_DIR / page), default_timeout=120)
     app.run()
     assert not app.exception, f"{page} raised: {[e.value for e in app.exception]}"
+    assert not any("Sample data demo" in notice.value for notice in app.info)
+    if page == "pages/5_Process_Control.py":
+        assert app.selectbox[0].options[0].startswith("Selected data")
+
+
+@pytest.mark.parametrize("page", PAGES)
+def test_sample_pages_disclose_actual_fixture_provenance(demo_app_marts, page: str) -> None:
+    metadata = json.loads((demo_app_marts / "run_metadata.json").read_text(encoding="utf-8"))
+    app = AppTest.from_file(str(APP_DIR / page), default_timeout=120)
+    app.run()
+
+    assert not app.exception, f"{page} raised: {[e.value for e in app.exception]}"
+    notices = [notice.value for notice in app.info if "Sample data demo" in notice.value]
+    assert len(notices) == 1
+    for entry in metadata["staged_years"]:
+        assert f"{entry['year']} ({entry['rows']:,} records)" in notices[0]
+    assert "not statewide totals or hospital performance findings" in notices[0]
+    if page == "pages/5_Process_Control.py":
+        assert app.selectbox[0].options[0].startswith("Sample")
+        assert app.warning, "three fixture years cannot establish control limits"
+    if page == "pages/4_Facility_Benchmarks.py":
+        assert any("patterns in the sample" in element.value for element in app.markdown)
+
+
+def test_mixed_build_discloses_only_the_page_using_sample_marts(
+    demo_app_marts, tmp_path, monkeypatch
+) -> None:
+    local = tmp_path / "partial_local_build"
+    local.mkdir()
+    shutil.copy2(demo_app_marts / "executive_kpis.parquet", local / "executive_kpis.parquet")
+    monkeypatch.setattr(config, "MARTS_DIR", local)
+
+    executive = AppTest.from_file(
+        str(APP_DIR / "pages/1_Executive_Summary.py"), default_timeout=120
+    )
+    executive.run()
+    assert not executive.exception
+    assert not any("Sample data demo" in notice.value for notice in executive.info)
+
+    process = AppTest.from_file(str(APP_DIR / "pages/5_Process_Control.py"), default_timeout=120)
+    process.run()
+    assert not process.exception
+    assert any("Sample data demo" in notice.value for notice in process.info)
+    assert process.selectbox[0].options[0].startswith("Sample")
+
+
+def test_missing_demo_metadata_keeps_sample_disclosure(demo_app_marts) -> None:
+    (demo_app_marts / "run_metadata.json").unlink()
+    app = AppTest.from_file(str(APP_DIR / "pages/1_Executive_Summary.py"), default_timeout=120)
+    app.run()
+    assert not app.exception
+    assert any("Sample data demo" in notice.value for notice in app.info)
+
+
+@pytest.mark.parametrize("mart_source", ["local", "demo"])
+@pytest.mark.parametrize("metadata_present", [True, False])
+def test_data_quality_metadata_stays_with_its_mart_source(
+    demo_app_marts, tmp_path, monkeypatch, mart_source: str, metadata_present: bool
+) -> None:
+    from app.components import data
+
+    expected = json.loads((demo_app_marts / "run_metadata.json").read_text(encoding="utf-8"))
+    local = tmp_path / "local_metadata_build"
+    local.mkdir()
+    if mart_source == "local":
+        shutil.copy2(
+            demo_app_marts / "data_quality_summary.parquet", local / "data_quality_summary.parquet"
+        )
+    source_dir = local if mart_source == "local" else demo_app_marts
+    unrelated_dir = demo_app_marts if mart_source == "local" else local
+    (source_dir / "run_metadata.json").write_text(json.dumps(expected), encoding="utf-8")
+    unrelated = {
+        **expected,
+        "staged_years": [{"year": 2099, "rows": 999999, "distinct_facilities": 1}],
+    }
+    (unrelated_dir / "run_metadata.json").write_text(json.dumps(unrelated), encoding="utf-8")
+    if not metadata_present:
+        (source_dir / "run_metadata.json").unlink()
+    monkeypatch.setattr(config, "MARTS_DIR", local)
+
+    metadata = data.load_run_metadata("data_quality_summary.parquet")
+    assert metadata == (expected if metadata_present else None)
+    app = AppTest.from_file(str(APP_DIR / "pages/6_Data_Quality.py"), default_timeout=120)
+    app.run()
+    assert not app.exception
+    row_metrics = [metric.value for metric in app.metric if metric.label == "Rows staged"]
+    if metadata_present:
+        assert row_metrics == [f"{sum(entry['rows'] for entry in expected['staged_years']):,}"]
+    else:
+        assert not row_metrics
+        assert any("beside the displayed data-quality mart" in notice.value for notice in app.info)
 
 
 def test_executive_kpis_reconcile_to_trends(app_marts) -> None:

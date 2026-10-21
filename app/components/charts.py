@@ -156,6 +156,7 @@ def bubble_scatter(
     median_y: float,
     x_title: str,
     y_title: str,
+    median_label: str = "selected data median",
 ) -> go.Figure:
     sizeref = 2.0 * max(size) / (55**2)
     fig = go.Figure(
@@ -183,13 +184,13 @@ def bubble_scatter(
     fig.add_vline(
         x=median_x,
         line={"dash": "dash", "color": MUTED},
-        annotation_text="statewide median",
+        annotation_text=median_label,
         annotation_font_color=MUTED,
     )
     fig.add_hline(
         y=median_y,
         line={"dash": "dash", "color": MUTED},
-        annotation_text="statewide median",
+        annotation_text=median_label,
         annotation_font_color=MUTED,
         annotation_position="right",
     )

@@ -21,6 +21,7 @@ theme.page_header(
     "Which service lines and APR-DRGs concentrate estimated cost?",
     "Service line = APR Major Diagnostic Category (MDC). APR-DRG is the "
     "stable cross-year clinical grouping key.",
+    mart_name="service_line_summary.parquet",
 )
 
 with st.sidebar:

@@ -20,6 +20,7 @@ theme.page_header(
     "How are discharges and estimated cost distributed across payer classes?",
     "Payer classes harmonize the 2009-2016 and 2017+ source taxonomies "
     "(documented in the data dictionary).",
+    mart_name="payer_exposure.parquet",
 )
 
 with st.sidebar:
