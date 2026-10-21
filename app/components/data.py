@@ -35,6 +35,19 @@ def resolve_mart_path(file_name: str) -> Path | None:
     return None
 
 
+def is_demo_mart(file_name: str) -> bool:
+    """Identify the actual source of a mart, including partial local builds."""
+    return resolve_mart_path(file_name) == config.DEMO_MARTS_DIR / file_name
+
+
+def load_demo_run_metadata() -> dict | None:
+    """Read sample provenance even when local run metadata takes precedence."""
+    path = config.DEMO_MARTS_DIR / "run_metadata.json"
+    if not path.exists():
+        return None
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
 @st.cache_data(show_spinner=False)
 def _read_parquet(path_str: str, _mtime: float) -> pd.DataFrame:
     return pd.read_parquet(path_str)
@@ -52,10 +65,14 @@ def load_mart(file_name: str) -> pd.DataFrame:
     return _read_parquet(str(path), path.stat().st_mtime)
 
 
-def load_run_metadata() -> dict | None:
-    """Pipeline run metadata, or None before the first build."""
-    path = resolve_mart_path("run_metadata.json")
-    if path is None:
+def load_run_metadata(mart_name: str | None = None) -> dict | None:
+    """Read run metadata, optionally scoped to the selected mart's own build."""
+    if mart_name is None:
+        path = resolve_mart_path("run_metadata.json")
+    else:
+        mart_path = resolve_mart_path(mart_name)
+        path = mart_path.parent / "run_metadata.json" if mart_path is not None else None
+    if path is None or not path.exists():
         return None
     return json.loads(path.read_text(encoding="utf-8"))
 

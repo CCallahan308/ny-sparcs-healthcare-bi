@@ -33,6 +33,9 @@ beyond their historical process behavior.
 )
 
 st.markdown("#### What each page answers")
+benchmark_scope = (
+    "sample" if data.is_demo_mart("facility_drg_benchmarks.parquet") else "selected data"
+)
 page_guide = [
     (
         "Executive Summary",
@@ -50,7 +53,7 @@ page_guide = [
     ),
     (
         "Facility Benchmarks",
-        "Which facilities differ from statewide patterns after adjusting for "
+        f"Which facilities differ from patterns in the {benchmark_scope} after adjusting for "
         "case mix, and by how much?",
     ),
     (

@@ -15,6 +15,8 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from app.components import data  # noqa: E402
+
 ACCENT = "#0F6E63"
 ACCENT_SOFT = "#4C9A8E"
 ACCENT_PALE = "#8FC3BA"
@@ -39,7 +41,7 @@ FONT_STACK = "Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif"
 
 _CSS = """
 <style>
-  .block-container {max-width: 1180px; padding-top: 2.0rem; padding-bottom: 3rem;}
+  .block-container {max-width: 1180px; padding-top: 4.25rem; padding-bottom: 3rem;}
   [data-testid="stHeader"] {background: #FFFFFF;}
   [data-testid="stMetric"] {background: #F8F9F9; border: 1px solid #E5E8E7;
     border-radius: 6px; padding: 14px 16px;}
@@ -65,12 +67,31 @@ def apply_theme() -> None:
     st.markdown(_CSS, unsafe_allow_html=True)
 
 
-def page_header(kicker: str, title: str, subhead: str) -> None:
+def page_header(
+    kicker: str,
+    title: str,
+    subhead: str,
+    *,
+    mart_name: str = "run_metadata.json",
+) -> None:
     """Consistent page header: context line, business question, scope note."""
     st.markdown(f'<div class="kicker">{kicker}</div>', unsafe_allow_html=True)
     st.markdown(f"# {title}")
     st.markdown(f'<div class="subhead">{subhead}</div>', unsafe_allow_html=True)
     st.markdown("")
+    if data.is_demo_mart(mart_name):
+        metadata = data.load_demo_run_metadata()
+        scope = "This view uses committed public-data sample marts."
+        if metadata:
+            samples = ", ".join(
+                f"{entry['year']} ({entry['rows']:,} records)" for entry in metadata["staged_years"]
+            )
+            scope = f"Public record samples: {samples}."
+        st.info(
+            f"**Sample data demo.** {scope} "
+            "These are sample aggregates, not statewide totals or hospital performance findings. "
+            "Limited years can leave control-chart baselines unavailable."
+        )
 
 
 def definitions_expander() -> None:

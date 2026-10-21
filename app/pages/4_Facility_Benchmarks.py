@@ -20,11 +20,15 @@ st.set_page_config(page_title="Facility Benchmarks", layout="centered")
 theme.apply_theme()
 
 detail = data.load_mart("facility_drg_benchmarks.parquet")
+benchmark_scope = (
+    "sample" if data.is_demo_mart("facility_drg_benchmarks.parquet") else "selected data"
+)
 theme.page_header(
     "Facility benchmarks",
-    "Which facilities differ from statewide patterns after adjusting for case mix?",
+    f"Which facilities differ from patterns in the {benchmark_scope} after adjusting for case mix?",
     "Cost index compares each facility's estimated cost with the cost implied "
-    "by statewide median rates for the same APR-DRG mix.",
+    f"by {benchmark_scope} median rates for the same APR-DRG mix.",
+    mart_name="facility_drg_benchmarks.parquet",
 )
 
 with st.sidebar:
@@ -75,12 +79,13 @@ else:
             median_cost,
             "ALOS (days)",
             "Estimated cost per discharge",
+            median_label=f"{benchmark_scope} median",
         ),
         width="stretch",
         key="benchmark_scatter",
     )
     st.caption(
-        "Point size: qualifying discharges. Dashed lines: statewide facility "
+        f"Point size: qualifying discharges. Dashed lines: {benchmark_scope} facility "
         "medians. Position above or right of the medians is a signal for "
         "investigation, not a finding of inefficiency."
     )
@@ -120,7 +125,7 @@ data.download_button(table, "facility_benchmarks.csv", "Download benchmarks (CSV
 with st.expander("Benchmark methodology"):
     st.markdown(
         "- Index = total estimated cost / expected cost, where expected cost "
-        "prices each qualifying facility-DRG volume at the statewide median "
+        f"prices each qualifying facility-DRG volume at the {benchmark_scope} median "
         "cost per discharge for that DRG (indirect standardization: the case "
         "mix self-weights the rollup).\n"
         "- DRG medians are facility-level medians among qualifying "

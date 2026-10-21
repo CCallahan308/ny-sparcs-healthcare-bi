@@ -21,6 +21,7 @@ theme.page_header(
     "Where do volume, cost, and throughput stand?",
     "All KPIs derive from the executive KPIs mart through the documented "
     "metric definitions; the denominator is discharges in the selected scope.",
+    mart_name="executive_kpis.parquet",
 )
 
 with st.sidebar:

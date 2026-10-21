@@ -18,19 +18,21 @@ st.set_page_config(page_title="Process Control", layout="centered")
 theme.apply_theme()
 
 series_mart = data.load_mart("process_control_series.parquet")
+series_scope = "Sample" if data.is_demo_mart("process_control_series.parquet") else "Selected data"
 theme.page_header(
     "Process control",
     "Which annual metrics show signals rather than routine variation?",
     "XmR charts on annual observations. Baselines exclude assignable-cause "
     "years (2020 by default); excluded years stay visible and can be flagged.",
+    mart_name="process_control_series.parquet",
 )
 
 METRIC_LABELS = {
-    "alos": "Statewide average length of stay (days)",
-    "cost_per_discharge": "Statewide estimated cost per discharge",
-    "post_acute_rate": "Statewide post-acute discharge rate",
-    "high_severity_share": "Statewide high-severity share",
-    "ed_origin_rate": "Statewide ED-origin rate",
+    "alos": f"{series_scope} average length of stay (days)",
+    "cost_per_discharge": f"{series_scope} estimated cost per discharge",
+    "post_acute_rate": f"{series_scope} post-acute discharge rate",
+    "high_severity_share": f"{series_scope} high-severity share",
+    "ed_origin_rate": f"{series_scope} ED-origin rate",
     "alos_mdc": "Average length of stay by service line (days)",
     "cost_per_discharge_mdc": "Estimated cost per discharge by service line",
 }
@@ -69,7 +71,7 @@ with st.sidebar:
         format_func=METRIC_LABELS.__getitem__,
     )
     series_id = "statewide"
-    series_label = "Statewide"
+    series_label = series_scope
     if metric in mdc_metrics:
         options = (
             series_mart[series_mart["metric"] == metric]
@@ -174,7 +176,7 @@ with st.expander("Methodology"):
         "never targets.\n"
         "- Rules: a point beyond a 3-sigma limit (`beyond_limits`) and a run "
         "of 8 consecutive points on one side of the centerline (`run_of_8`).\n"
-        "- With roughly sixteen annual observations, limits are estimates "
+        f"- With {len(years_available)} annual observations, limits are estimates "
         "with real uncertainty; treat borderline signals cautiously. Full "
         "method: docs/spc_methodology.md."
     )

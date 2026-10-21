@@ -23,6 +23,7 @@ theme.page_header(
     "What is in the data, what is missing, and what should not be compared?",
     "Coverage, completeness, invalid-value checks, schema drift across annual "
     "files, and pipeline run metadata.",
+    mart_name="data_quality_summary.parquet",
 )
 
 st.markdown("#### Coverage and completeness by year")
@@ -62,9 +63,12 @@ st.dataframe(
     hide_index=True,
     width="stretch",
 )
+aggregate_scope = (
+    "sample" if data.is_demo_mart("data_quality_summary.parquet") else "loaded dataset"
+)
 st.caption(
     "Redacted share: records whose facility fields were redacted at source "
-    "(for example abortion-related discharges); they count in statewide "
+    f"(for example abortion-related discharges); they count in {aggregate_scope} "
     "totals but never in facility comparisons. LOS capped: source codes "
     "stays of 120 days or more as '120 +', staged as 120 with a flag. "
     "Missing shares sit at or near zero by design; SPARCS is a highly "
@@ -99,7 +103,7 @@ else:
     st.info("Schema report not found (docs/schema_report.json).")
 
 st.markdown("#### Pipeline run metadata")
-metadata = data.load_run_metadata()
+metadata = data.load_run_metadata("data_quality_summary.parquet")
 if metadata:
     staged = metadata.get("staged_years", [])
     total_rows = sum(entry["rows"] for entry in staged)
@@ -124,7 +128,7 @@ if metadata:
             expanded=1,
         )
 else:
-    st.info("No run metadata found; build marts with scripts/run_pipeline.py.")
+    st.info("No run metadata was found beside the displayed data-quality mart.")
 
 st.markdown("#### Known limitations")
 limitations_path = ROOT / "docs" / "limitations.md"
