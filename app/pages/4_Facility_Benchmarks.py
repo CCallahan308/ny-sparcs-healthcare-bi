@@ -33,7 +33,9 @@ theme.page_header(
 
 with st.sidebar:
     st.markdown("#### Filters")
-    bounds = filters.year_range(detail)
+    bounds = filters.year_range(
+        detail, include_all_years=data.is_demo_mart("facility_drg_benchmarks.parquet")
+    )
     counties = filters.multiselect(detail, "county", "County")
 
 scope = filters.apply(detail, year_bounds=bounds, counties=counties)

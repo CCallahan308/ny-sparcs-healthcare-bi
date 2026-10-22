@@ -26,7 +26,9 @@ theme.page_header(
 
 with st.sidebar:
     st.markdown("#### Filters")
-    bounds = filters.year_range(lines)
+    bounds = filters.year_range(
+        lines, include_all_years=data.is_demo_mart("service_line_summary.parquet")
+    )
     service_lines = filters.multiselect(lines, "mdc_description", "Service line")
 
 scope = filters.apply(lines, year_bounds=bounds, service_lines=service_lines)

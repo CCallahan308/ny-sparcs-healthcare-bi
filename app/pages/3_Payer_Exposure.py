@@ -25,7 +25,9 @@ theme.page_header(
 
 with st.sidebar:
     st.markdown("#### Filters")
-    bounds = filters.year_range(payer)
+    bounds = filters.year_range(
+        payer, include_all_years=data.is_demo_mart("payer_exposure.parquet")
+    )
     counties = filters.multiselect(payer, "county", "County")
     facilities = filters.multiselect(payer, "facility_name", "Facility")
 
