@@ -49,15 +49,25 @@ _CSS = """
   [data-testid="stMetricValue"] {font-size: 25px; font-weight: 600; color: #2B2F2E;}
   .kicker {font-size: 12px; letter-spacing: .12em; text-transform: uppercase;
     color: #5A6260; font-weight: 600; margin-bottom: 2px;}
-  h1 {font-size: 27px; color: #2B2F2E; margin-bottom: 3px; font-weight: 650;}
+  [data-testid="stMarkdownContainer"] h1 {font-size: 27px; line-height: 1.2;
+    color: #2B2F2E; padding: 0 0 3px; font-weight: 650;}
   .subhead {color: #5A6260; font-size: 15px; margin-bottom: 4px;}
   h3 {font-size: 17px; color: #2B2F2E;}
   h4 {font-size: 15px; color: #2B2F2E; margin-bottom: 6px;}
   .caption {color: #5A6260; font-size: 12.5px;}
   [data-testid="stSidebar"] {background: #F7F8F8;}
   [data-testid="stSidebar"] * {font-size: 13.5px;}
+  [data-testid="stExpandSidebarButton"],
+  [data-testid="stSidebarCollapseButton"] button {min-width: 44px; min-height: 44px;}
   [data-baseweb="slider"] [role="track"] {background: #DCE4E2 !important;}
   [data-baseweb="slider"] [role="track"] > div {background: #9FBFBA !important;}
+  @media (max-width: 640px) {
+    .block-container {padding-top: 3.5rem; padding-bottom: 1.5rem;}
+    [data-testid="stMarkdownContainer"] h1 {font-size: 25px;}
+    .subhead {font-size: 14px; line-height: 1.4;}
+    [data-testid="stAlert"] [data-testid="stMarkdownContainer"] p {
+      font-size: 13px; line-height: 1.4;}
+  }
 </style>
 """
 
@@ -88,10 +98,12 @@ def page_header(
             )
             scope = f"Public record samples: {samples}."
         st.info(
-            f"**Sample data demo.** {scope} "
-            "These are sample aggregates, not statewide totals or hospital performance findings. "
-            "Limited years can leave control-chart baselines unavailable."
+            "**Sample data demo.** Sample aggregates, not statewide totals or hospital "
+            "performance findings."
         )
+        with st.expander("Sample years and provenance"):
+            st.markdown(scope)
+            st.markdown("Limited years can leave control-chart baselines unavailable.")
 
 
 def definitions_expander() -> None:

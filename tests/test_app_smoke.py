@@ -144,9 +144,13 @@ def test_sample_pages_disclose_actual_fixture_provenance(demo_app_marts, page: s
     assert not app.exception, f"{page} raised: {[e.value for e in app.exception]}"
     notices = [notice.value for notice in app.info if "Sample data demo" in notice.value]
     assert len(notices) == 1
+    provenance = next(
+        element.value for element in app.markdown if "Public record samples:" in element.value
+    )
     for entry in metadata["staged_years"]:
-        assert f"{entry['year']} ({entry['rows']:,} records)" in notices[0]
+        assert f"{entry['year']} ({entry['rows']:,} records)" in provenance
     assert "not statewide totals or hospital performance findings" in notices[0]
+    assert any(expander.label == "Sample years and provenance" for expander in app.expander)
     if page == "pages/5_Process_Control.py":
         assert app.selectbox[0].options[0].startswith("Sample")
         assert app.warning, "three fixture years cannot establish control limits"
@@ -233,6 +237,37 @@ def test_executive_kpis_reconcile_to_trends(app_marts) -> None:
     assert kpis["discharges"] == total_discharges
     assert kpis["estimated_cost"] == pytest.approx(total_cost)
     assert kpis["cost_per_discharge"] == pytest.approx(total_cost / total_discharges)
+
+
+def test_sample_executive_defaults_include_every_year_and_prior_comparison(demo_app_marts) -> None:
+    app = AppTest.from_file(str(APP_DIR / "pages/1_Executive_Summary.py"), default_timeout=120)
+    app.run()
+
+    assert not app.exception
+    assert app.slider[0].value == (2009, 2024)
+    assert any("Focus year: 2024 (deltas vs 2011)" in element.value for element in app.markdown)
+
+
+@pytest.mark.parametrize(
+    ("years", "include_all_years", "expected_start"),
+    [
+        ([2009, 2011, 2024], False, 2009),
+        ([2009, 2019, 2024], False, 2019),
+        ([2009, 2019, 2024], True, 2009),
+    ],
+)
+def test_year_range_uses_available_years_and_retains_local_recent_default(
+    years: list[int], include_all_years: bool, expected_start: int
+) -> None:
+    app = AppTest.from_string(
+        "import pandas as pd\n"
+        "from app.components import filters\n"
+        f"filters.year_range(pd.DataFrame({{'discharge_year': {years!r}}}), "
+        f"include_all_years={include_all_years!r})"
+    ).run()
+
+    assert not app.exception
+    assert app.slider[0].value == (expected_start, max(years))
 
 
 def test_contradictory_filters_produce_graceful_empty_state(app_marts) -> None:

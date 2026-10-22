@@ -12,12 +12,18 @@ from src.config import DEFAULT_START_YEAR
 
 
 def year_range(
-    frame: pd.DataFrame, key: str = "year_range", label: str = "Year range"
+    frame: pd.DataFrame,
+    key: str = "year_range",
+    label: str = "Year range",
+    *,
+    include_all_years: bool = False,
 ) -> tuple[int, int]:
-    """Slider over the years present in the mart, defaulting to 2019+."""
+    """Select all sample years, or start local builds at 2019 when available."""
     years = sorted(int(year) for year in frame["discharge_year"].unique())
     lo, hi = years[0], years[-1]
-    default_start = DEFAULT_START_YEAR if lo <= DEFAULT_START_YEAR <= hi else lo
+    default_start = (
+        DEFAULT_START_YEAR if not include_all_years and DEFAULT_START_YEAR in years else lo
+    )
     return st.slider(label, lo, hi, (default_start, hi), key=key)
 
 

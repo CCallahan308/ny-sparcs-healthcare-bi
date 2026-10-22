@@ -26,7 +26,7 @@ theme.page_header(
 
 with st.sidebar:
     st.markdown("#### Filters")
-    bounds = filters.year_range(kpis)
+    bounds = filters.year_range(kpis, include_all_years=data.is_demo_mart("executive_kpis.parquet"))
     counties = filters.multiselect(kpis, "county", "County")
     facilities = filters.multiselect(kpis, "facility_name", "Facility")
     payers = filters.multiselect(kpis, "payer_class", "Payer class")
